@@ -154,7 +154,7 @@ async function createLoopHandler(data, userInfo) {
       loopRequestUpdate.status === "success"
     ) {
       //now,we have created and saved the loopRoom obj, now we will create a custom url for joining the loopRoom
-      const loopRoomURL = `http://localhost:3000/loopRooms?roomID=${loopRoomObj.loopRoomID}`;
+      const loopRoomURL = `loop-connect.onrender.com/loopRooms?roomID=${loopRoomObj.loopRoomID}`;
       return {
         status: "success",
         message: { loopRoomURL, receiverLID: data.receiverLID },

@@ -193,7 +193,7 @@ const peerServer = ExpressPeerServer(server, {
 app.use("/peerjs", peerServer);
 
 // Start the server
-const PORT = process.env.PORT || 9000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`PeerJS server running at http://localhost:${PORT}`);
+  console.log(`PeerJS server running at PORT: ${PORT}`);
 });
