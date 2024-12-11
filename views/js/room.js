@@ -179,7 +179,7 @@ async function roomInitialiser() {
             { urls: "stun:stun2.l.google.com:19302" },
           ],
         },
-        host: "loop-connect.onrender.com",
+        host: "/",
         port: 3000,
         path: "/peerjs",
         debug: 3,
