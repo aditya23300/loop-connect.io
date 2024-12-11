@@ -1,0 +1,283 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: black;
+  background-size: cover; /* Cover the entire viewport */
+  background-position: center; /* Center the background image */
+  background-repeat: no-repeat; /* Prevent the image from repeating */
+  color: white; /* Optional: change text color for better contrast */
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full viewport height */
+  overflow: hidden; /* Prevent scrolling */
+}
+
+.navbar {
+  display: block;
+  top: 0%;
+  left: 0;
+  width: 100%; /* Full width */
+  background-color: black;
+  z-index: 1000; /* Ensure it's above other content */
+  padding-top: 1%;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between; /* Space between logo and hamburger */
+  align-items: center; /* Center items vertically */
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.logo {
+  width: 7%;
+  height: 7%;
+  padding: 0.5% 0%;
+  margin: 0%;
+}
+
+.hamburger {
+  display: none; /* Hide hamburger menu by default */
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.line {
+  height: 3px;
+  width: 25px;
+  background-color: white;
+  margin: 3px 0; /* Space between lines */
+}
+
+.nav-list {
+  list-style: none;
+  display: flex; /* Default display for larger screens */
+  margin-top: 0%;
+}
+.nav-list li {
+  margin-top: 4%;
+  margin-bottom: 4%;
+}
+
+.nav-button {
+  position: relative; /* Position relative for the pseudo-elements */
+  color: white; /* Text color */
+  text-decoration: none; /* Remove underline */
+  padding: 15px 20px;
+  overflow: hidden; /* Hide overflow for animation */
+  transition: color 0.3s; /* Smooth transition for text color */
+  margin-top: 1%;
+  margin-bottom: 1%;
+}
+
+.nav-button::after {
+  content: ""; /* Pseudo-element for the underline effect */
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background-color: white; /* Color of the underline */
+  transition: width 0.4s ease, left 0.4s ease; /* Animation for the underline */
+}
+
+.nav-button:hover::after {
+  width: 100%; /* Full width on hover */
+  left: 0; /* Move to the left */
+}
+
+.nav-button:hover {
+  color: #ffd700; /* Change text color on hover */
+  cursor: pointer; /* This makes the cursor change to a pointer */
+}
+
+.content {
+  margin: 0% auto;
+  width: 65%;
+  padding-top: 10%;
+  text-align: center;
+  font-family: "Raleway", sans-serif; /* Use Raleway for paragraphs */
+  font-size: 0.9rem;
+  p {
+    font-size: 1.25rem;
+    padding-top: 1%;
+    margin-bottom: 2%;
+  }
+  ul {
+    font-size: 1.25rem;
+    list-style-type: disc;
+    display: inline-block; /* This makes the list center-aligned */
+    margin: 0 auto; /* Center the list */
+    padding: 1% 1.5rem;
+    text-align: left; /* Align list item text to the left */
+    max-width: 80%; /* Limit the width to prevent extreme stretching */
+  }
+
+  li {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: white;
+    /* Remove text-align: left as it's now handled by the ul */
+  }
+  h4 {
+    color: #d22b2b;
+  }
+}
+
+.button-container {
+  text-align: center; /* Center the button container */
+  margin-top: 1.5%;
+  font-family: "Montserrat", sans-serif; /* Use Montserrat for buttons */
+}
+
+.animated-button {
+  background-color: #ff4c4c; /* Vibrant button color */
+  color: white; /* Text color */
+  border: none; /* Remove default border */
+  padding: 15px 30px; /* Padding around the text */
+  font-size: 16px; /* Font size */
+  font-weight: bold; /* Make the text bold */
+  border-radius: 25px; /* Rounded corners */
+  cursor: pointer; /* Pointer cursor on hover */
+  transition: all 0.3s ease; /* Smooth transition for hover effects */
+  box-shadow: 0 4px 15px rgba(255, 87, 51, 0.5); /* Shadow for depth */
+}
+
+.animated-button:hover {
+  background-color: #ff7043; /* Darker shade on hover */
+  transform: translateY(-3px); /* Lift the button up slightly */
+  box-shadow: 0 6px 20px rgba(255, 87, 51, 0.7); /* Increase shadow on hover */
+}
+
+.animated-button:active {
+  transform: translateY(1px); /* Slightly lower when clicked */
+  box-shadow: 0 3px 10px rgba(255, 87, 51, 0.5); /* Reduce shadow */
+}
+/*for popup*/
+/* Popup Overlay */
+#popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  z-index: 1000;
+}
+
+/* Popup Box */
+.popup {
+  position: relative;
+  max-width: 300px;
+  width: 80%;
+  padding: 20px;
+  background: black;
+  border: 0.1rem solid #fff; /* White border */
+  border-radius: 8px;
+  text-align: center;
+  transform: scale(0.8);
+  transition: transform 0.3s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.5s ease forwards;
+}
+
+/* Popup Content */
+.popup h2 {
+  margin-bottom: 15px;
+  color: white;
+}
+.popup p {
+  margin-bottom: 20px;
+  color: white;
+}
+/* Loader Spinner */
+.loader {
+  border: 6px solid #f3f3f3; /* Light grey */
+  border-top: 6px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 50px; /* Size of the spinner */
+  height: 50px; /* Size of the spinner */
+  animation: spin 1s linear infinite; /* Spin animation */
+  margin: 20px auto; /* Center the spinner */
+}
+
+/* Spin Animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Show Popup Styles */
+#popupOverlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+.popup.show {
+  transform: scale(1);
+}
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .nav-list {
+    display: none; /* Hide nav list on small screens */
+    flex-direction: column; /* Stack items vertically */
+    position: absolute;
+    top: 60px; /* Position below the navbar */
+    left: 0;
+    width: 100%; /* Full width */
+    background-color: #333; /* Match navbar background */
+    z-index: 999; /* Above other content */
+  }
+
+  .nav-list.active {
+    display: flex; /* Show nav list when active */
+  }
+
+  .hamburger {
+    display: flex; /* Show hamburger menu */
+  }
+  .button-container {
+    margin-top: 10%;
+  }
+  .content {
+    width: 80%;
+    h1 {
+      font-size: 1.1rem;
+      margin-bottom: 2%;
+    }
+    p {
+      font-size: 0.9rem;
+    }
+    ul,
+    li {
+      font-size: 0.9rem;
+    }
+  }
+}

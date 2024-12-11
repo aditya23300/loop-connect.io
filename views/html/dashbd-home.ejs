@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LoopConnect</title>
+    <link rel="stylesheet" href="../css/dashbd.css" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../pics/favicon-32x32.png" />
+  </head>
+  <body>
+    <!-- Popup Container -->
+    <div id="popupOverlay">
+      <div class="popup">
+        <h2 id="popup-title"></h2>
+        <p id="popup-body"></p>
+        <div class="loader"></div>
+        <button id="popUp-refresh-btn" class="popUp-refresh-btn hidden">
+          Refresh
+        </button>
+      </div>
+    </div>
+    <nav class="navbar">
+      <div class="navbar-container">
+        <div class="hamburger" id="hamburger">
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+        </div>
+        <img
+          class="logo"
+          src="../pics/loopconnect_logo-removebg-preview (2).png"
+          alt="MyApp Logo"
+        />
+
+        <ul class="nav-list" id="nav-list">
+          <li>
+            <a
+              class="nav-button"
+              href="mailto:adityaraj23300@gmail.com?subject=Query%20Regarding%20LoopConnect.io&body=Please%20guide%20me%20on%20how%20to%20use%20this%20webapp"
+              >Contact Us</a
+            >
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="status-bar">
+      <div class="user-info">
+        <h2>Welcome,<%= userInfo.username %>!</h2>
+        <p><%= userInfo.email %></p>
+      </div>
+      <div class="status-buttons-container">
+        <div class="copy-btn-container">
+          Your loop-id: <%= userInfo.loopID %>
+          <button class="copy-btn">📋 Copy</button>
+        </div>
+        <button class="logout-btn">Logout</button>
+      </div>
+    </div>
+    <hr class="white-line" />
+    <nav class="mini-navbar">
+      <button class="mini-nav-btn active" data-section="section-1">
+        Create new Loop
+      </button>
+      <button class="mini-nav-btn" data-section="section-2">
+        Loops created
+      </button>
+      <button class="mini-nav-btn" data-section="section-3">
+        Incoming loop requests
+      </button>
+    </nav>
+    <div class="scrollable-div">
+      <div class="loop-container section active" id="section-1">
+        <div class="loop-page-heading"><h2>Create loop session</h2></div>
+        <form class="loopSessionCreateForm">
+          <h2>Enter loop-id of the user you wanna connect to:</h2>
+          <div class="input-container">
+            <input
+              required
+              type="string"
+              placeholder="Enter Loop-id"
+              name="receiver-loop-id"
+              class="receiver-loop-id"
+            />
+          </div>
+          <button class="create-button">Create loop-session</button>
+          <p class="error-msg"></p>
+        </form>
+      </div>
+      <div class="loop-container section" id="section-2">
+        <div class="loop-page-heading"><h2>Loops you created</h2></div>
+      </div>
+      <div class="loop-container section" id="section-3">
+        <div class="loop-page-heading"><h2>Incoming loop requests</h2></div>
+      </div>
+      <footer class="footer">
+        <div class="footer-container">
+          <div class="footer-section about">
+            <h3>About LoopConnect</h3>
+            <p>
+              LoopConnect is your one-stop solution for seamless communication.
+              <br />
+              Share files, chat, and collaborate effortlessly.
+            </p>
+            <p>
+              Made with ❤️ by:
+              <a href="https://aditya23300.github.io/portfolio-webapp/"
+                >Aditya</a
+              >
+            </p>
+          </div>
+          <div class="footer-section links">
+            <h3>Quick Links</h3>
+            <ul>
+              <!-- <li><a href="/terms">Terms & Conditions</a></li>
+              <li><a href="/privacy">Privacy Policy</a></li> -->
+              <li>
+                <a
+                  href="mailto:adityaraj23300@gmail.com?subject=Query%20Regarding%20LoopConnect.io&body=Please%20guide%20me%20on%20how%20to%20use%20this%20webapp"
+                  >Contact Us</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="footer-section social">
+            <h3>Follow me</h3>
+            <div class="social-icons">
+              <a href="https://www.linkedin.com/in/aditya23300/"
+                ><img src="../pics/linkedin.png" alt="LinkedIn"
+              /></a>
+              <a href="https://x.com/aditya23300"
+                ><img src="../pics/twitter.png" alt="Twitter"
+              /></a>
+              <a href="https://github.com/aditya23300"
+                ><img src="../pics/github-logo.png" alt="github"
+              /></a>
+            </div>
+          </div>
+        </div>
+        <div class="credits">
+          Credits:<br />
+          <a href="https://www.flaticon.com/free-icons/cat" title="cat icons"
+            >Cat icons created by Dave Gandy - Flaticon</a
+          >
+          <a
+            href="https://www.flaticon.com/free-icons/linkedin"
+            title="linkedin icons"
+            >Linkedin icons created by Roundicons - Flaticon</a
+          >
+          <a
+            href="https://www.flaticon.com/free-icons/tweet"
+            title="tweet icons"
+            >Tweet icons created by Freepik - Flaticon</a
+          >
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2024 LoopConnect | All Rights Reserved</p>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="../js/dashbd-home.js"></script>
+  </body>
+</html>
