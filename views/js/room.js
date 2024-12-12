@@ -430,6 +430,8 @@ async function setupVideoCall() {
     // Receiver side call handler
     peer.on("call", (incomingCall) => {
       try {
+        // Ensure local stream is muted when answering
+        localVideo.muted = true;
         incomingCall.answer(localStream);
         incomingCall.on("stream", async (remoteStream) => {
           await initialiseRemoteStream(remoteStream);
@@ -461,7 +463,11 @@ async function initialiseLocalStream() {
   console.log("local video stream initialised");
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
       video: true,
     });
 
@@ -480,7 +486,10 @@ async function initialiseLocalStream() {
 }
 async function initialiseRemoteStream(remoteStream) {
   console.log("Incoming remote stream received");
+  // Ensure local video is muted
+  localVideo.muted = true;
   remoteVideo.srcObject = remoteStream;
+  remoteVideo.muted = false; // Ensure remote video audio is not muted
   remoteVideo.play();
   monitoredConnection.status = true;
 }
