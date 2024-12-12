@@ -1,7 +1,5 @@
 const express = require("express");
-const { ExpressPeerServer } = require("peer");
 const app = express();
-const server = require("http").Server(app);
 const path = require("path");
 const cors = require("cors");
 const {
@@ -174,26 +172,10 @@ app.get("/logout", (req, res) => {
     res.json({ status: "failed" });
   }
 });
-// Create a PeerJS server
-const peerServer = ExpressPeerServer(server, {
-  debug: true,
-  path: "/",
-  allow_discovery: false,
-  config: {
-    iceServers: [
-      // Google's public STUN servers
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-      { urls: "stun:stun2.l.google.com:19302" },
-    ],
-  },
-});
-
-// Attach the PeerJS server to the Express server
-app.use("/peerjs", peerServer);
 
 // Start the server
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`PeerJS server running at PORT: ${PORT}`);
+// Start the server and listen on the specified port
+app.listen(PORT, () => {
+  console.log(`Server is running on PORT: ${PORT}`);
 });

@@ -3,129 +3,327 @@ let peer,
   senderPeerID,
   receiverPeerID,
   connectionStatus = { status: false, message: "" },
-  monitoredConnection, //to keep track of the connection
-  refreshCount = 0;
+  monitoredConnection,
+  refreshCount = 0,
+  role,
+  localStream,
+  remoteStream;
+const localVideo = document.getElementById("local-video");
+const remoteVideo = document.getElementById("remote-video");
 document.addEventListener("DOMContentLoaded", async () => {
-  // Get the hamburger menu and nav list elements
-  const hamburger = document.getElementById("hamburger");
-  const navList = document.getElementById("nav-list");
+  // Add event listeners for dynamic height adjustment
+  window.addEventListener("load", async () => {
+    while (!connectionStatus.status) {
+      await delay(10);
+    }
+    setDynamicHeightResize();
+  });
+  window.addEventListener("resize", setDynamicHeightResize);
+  // Get UI elements
   const sendBtn = document.getElementById("sendMessage");
   const msgInput = document.getElementById("messageInput");
-  //setting up monitoring mechanism for the connectionStatus Object
+  const fileInput = document.getElementById("fileInput");
+  //call stream buttons
+  // Add event listeners for video controls
+  /* document
+    .getElementById("toggle-video")
+    .addEventListener("click", toggleVideoStream);
+  document
+    .getElementById("toggle-audio")
+    .addEventListener("click", toggleAudioStream); */
+  // Proxy setup for connection monitoring
   const handler = {
     set(target, key, value) {
-      // The set trap is triggered when a property is being set.
       if (key === "status" && target[key] !== value) {
-        console.log(`Status changed to: ${value}`); // Log when the status changes
+        console.log(`Status changed to: ${value}`);
         if (value) {
-          console.log("Performing action for true..."); // Action when status is true
+          console.log("Connection established");
         } else {
-          console.log("Performing action for false..."); // Action when status is false
+          console.log("Connection lost");
         }
         toggleUI();
       }
-      target[key] = value; // Update the property on the target object
-      return true; // Indicate that the operation was successful
+      target[key] = value;
+      return true;
     },
   };
-  // Creating the Proxy to monitor changes
   monitoredConnection = new Proxy(connectionStatus, handler);
-  //load the popup to show "setting-up the loop-room"
-  popUpDisplay("Setting up loop-room!!", "pls wait a few seconds!");
-  toggleUI();
-  //set-up the room by getting necessary details from the backend
-  await roomInitialiser();
-  // Handle peer errors
-  peer.on("error", (err) => {
-    console.error("PeerJS error:", err);
-
-    // If the connection was lost, recreate the connection
-    if (
-      (err.type === "network" || err.type === "peer-unavailable") &&
-      refreshCount <= 10
-    ) {
-      refreshCount++;
-      console.log(refreshCount);
-      peer.disconnect();
-      console.log("Attempting to reconnect...");
-      peer.reconnect();
-    } else if (refreshCount > 10) {
-      popUpDisplay(
-        "Failed to connect to the user",
-        "pls click the retry button"
-      );
+  // Text chat functionality
+  sendBtn.addEventListener("click", () => {
+    sendMessage();
+  });
+  msgInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      sendMessage();
     }
   });
-  sendBtn.addEventListener("click", () => {
+  const sendFileBtn = document.getElementById("sendFile");
+  // Trigger the file input popup when the button is clicked
+  sendFileBtn.addEventListener("click", () => {
+    fileInput.click(); // Programmatically opens the file input dialog
+  });
+  // File sharing functionality
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file && conn && conn.open) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        conn.send({
+          type: "file",
+          filename: file.name,
+          data: reader.result,
+        });
+        appendMessage("You", `Sent a file: ${file.name}`);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  });
+  //event delegation approach used here to create this event listener for dynamic elements: read about it and make notes
+  document.addEventListener("click", (e) => {
+    // Check if the clicked element has the "view-file-btn" class
+    if (e.target.classList.contains("view-file-btn")) {
+      const fileUrl = e.target.getAttribute("data-url"); // Get the file URL
+      if (fileUrl) window.open(fileUrl, "_blank"); // Open the file in a new tab
+    }
+  });
+  //event listener for chat-box view button
+  const chatBoxView = document.querySelector(".view-chat-box");
+  chatBoxView.addEventListener("click", () => {
+    //1st step: change button content
+    chatBoxView.textContent =
+      chatBoxView.textContent === "Hide Chat-Box"
+        ? "Show Chat-Box"
+        : "Hide Chat-Box";
+    //1st step: hide/show the chat-box
+    const chatBox = document.querySelector(".chat-box");
+    chatBox.classList.toggle("hidden");
+    //2nd step: resize the local video stream element
+    const localVidElement = document.querySelector(".local-video-div");
+    localVidElement.classList.toggle("toggle-local-vid");
+  });
+  //room execution starts from here:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+  popUpDisplay(
+    "Setting up loop-room!!",
+    "Please wait a few seconds!",
+    "loader"
+  );
+  toggleUI();
+  await roomInitialiser();
+
+  function sendMessage() {
     if (msgInput.value.trim() !== "" && conn && conn.open) {
       conn.send({
         type: "message",
         content: msgInput.value,
-      }); // Send the message
-      console.log("Message sent:", msgInput.value);
-      // Append message to the chat display
-      const chatMessages = document.getElementById("chat-messages");
-      const newMessage = document.createElement("p");
-      newMessage.innerHTML = `<b>You:</b> ${msgInput.value}`;
-      chatMessages.appendChild(newMessage);
-      chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the latest message
-
-      msgInput.value = ""; // Clear the input field after sending
-    } else {
-      console.log("Connection is not open or message input is empty");
+      });
+      appendMessage("You", msgInput.value);
+      msgInput.value = "";
     }
-  });
-
-  //event listener to handle any error during the conversation
-  /* The peer.on("error", (err) => { ... }) method is invoked when an error occurs in the PeerJS connection or any related operations. This event helps to handle unexpected issues during the lifetime of a PeerJS peer instance.*/
-  peer.on("error", (err) => {
-    console.error("Peer connection error:", err);
-    monitoredConnection.status = false;
-  });
-
-  // Toggle the active class on the nav list when the hamburger is clicked
-  hamburger.addEventListener("click", () => {
-    navList.classList.toggle("active");
-  });
+  }
 });
+
+async function roomInitialiser() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomID = urlParams.get("roomID");
+
+    const response = await fetch(`/setupRoom?roomID=${roomID}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const newResponse = await response.json();
+
+    if (response.ok && newResponse.status === "success") {
+      console.log("Room setup response:", newResponse);
+
+      senderPeerID = newResponse.roomInfo.senderLID;
+      receiverPeerID = newResponse.roomInfo.receiverLID;
+      role = newResponse.role;
+      // Initialize PeerJS connection
+      peer = new Peer(newResponse.userInfo.loopID, {
+        host: "peerserver-1.onrender.com",
+        port: 443, // Use 443 for HTTPS, or 80 for HTTPS
+        path: "/peerjs",
+        secure: true, // Set to true for HTTPS
+        debug: 3,
+      });
+      const myBuddyID =
+        newResponse.userInfo.loopID === receiverPeerID
+          ? senderPeerID
+          : receiverPeerID;
+      // Set up peer event handlers
+      peer.on("open", async () => {
+        console.log("Connected to PeerJS server");
+        popUpDisplay(
+          "Room setup successfully!!!",
+          `Waiting for the user with loopId "${myBuddyID}" to join... `,
+          "loader"
+        );
+        const vidStream = await initialiseLocalStream();
+        if (vidStream) {
+          await createConnection(newResponse);
+        }
+      });
+
+      peer.on("error", async (error) => {
+        console.error("Peer connection error:", error);
+        const k = 1; //no of refreshes to be done after one click of the refresh button
+        if (refreshCount < k) {
+          peer.disconnect();
+          peer.reconnect();
+          refreshCount++;
+          console.log("no of refreshes left: ", k - refreshCount);
+        } else {
+          await reconnectHandler();
+        }
+      });
+    } else {
+      console.error("Failed to initialize room setup");
+      popUpDisplay(
+        "Failed to setup the loop-room",
+        "Please click the refresh button or reload the page",
+        "refreshbtn"
+      );
+    }
+  } catch (error) {
+    console.error("Room initialization error:", error);
+    popUpDisplay(
+      "Error encountered! Failed to setup the loop-room",
+      "Please click the refresh button or reload the page",
+      "refreshbtn"
+    );
+  }
+}
+
+async function createConnection(newResponse) {
+  if (newResponse.role === "sender") {
+    console.log("Initializing as sender");
+    conn = peer.connect(receiverPeerID);
+
+    conn.on("open", async () => {
+      try {
+        console.log("Sender connection established");
+        await setupVideoCall();
+        conn.off("data"); // Remove existing listeners to prevent duplication
+        conn.on("data", (data) => {
+          console.log("Received data:", data);
+          if (data.type === "file") {
+            handleFileReceived(data);
+          } else if (data.type === "message") {
+            appendMessage("Peer", data.content);
+          }
+        });
+
+        conn.on("error", async (err) => {
+          console.error("Connection error:", err);
+          await reconnectHandler();
+        });
+
+        conn.on("close", async () => {
+          console.log("Connection closed");
+          await reconnectHandler();
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  } else {
+    console.log("Initialized as receiver");
+    popUpDisplay(
+      "Waiting for the user to join the room!!!",
+      `Note: You can click on the refresh button to retry connecting to the user instantly!!!`,
+      "both"
+    );
+    peer.on("connection", async (connection) => {
+      conn = connection;
+      console.log("Receiver connection established");
+      await setupVideoCall();
+      conn.off("data"); // Remove existing listeners to prevent duplication
+      conn.on("data", (data) => {
+        console.log("Received data:", data);
+        if (data.type === "file") {
+          handleFileReceived(data);
+        } else if (data.type === "message") {
+          appendMessage("Peer", data.content);
+        }
+      });
+
+      conn.on("error", async (err) => {
+        console.error("Connection error:", err);
+        await reconnectHandler();
+      });
+
+      conn.on("close", async () => {
+        console.log("Connection closed");
+        await reconnectHandler();
+      });
+    });
+  }
+  if (conn) {
+    conn.on("error", async () => {
+      console.error(
+        "Connection with the loop user failed,will try to reconnect. error:"
+      );
+      await reconnectHandler();
+    });
+  }
+}
+
+// async function setupConnectionHandlers(connection) {}
+
+function handleFileReceived(data) {
+  const blob = new Blob([data.data]);
+  const fileUrl = URL.createObjectURL(blob);
+  appendMessage(
+    "peer-file",
+    `Received a file: ${data.filename}
+     <div class="message-actions">
+      <button class="view-file-btn" data-url="${fileUrl}">View</button>
+      <a href="${fileUrl}"  download="${data.filename}" class="download-btn">Download</a>
+    </div>
+  </div>`
+  );
+}
+
 function appendMessage(sender, content) {
   const chatMessages = document.getElementById("chat-messages");
-  const newMessage = document.createElement("p");
-  newMessage.innerHTML = `<b>${sender}:</b> ${content}`;
+  const newMessage = document.createElement("div");
+  newMessage.classList.add("message");
+  const messageContent = document.createElement("p");
+  messageContent.classList.add("message-text");
+  if (sender === "You") {
+    newMessage.classList.add("sent");
+    messageContent.innerHTML = content;
+    newMessage.appendChild(messageContent);
+  } else if (sender === "Peer") {
+    newMessage.classList.add("received");
+    messageContent.innerHTML = content;
+    newMessage.appendChild(messageContent);
+  } else {
+    newMessage.classList.add("received");
+    newMessage.innerHTML = content;
+  }
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-function setupConnectionHandlers(connection) {
-  connection.on("data", (data) => {
-    console.log("Received data:", data);
-    if (data.type === "file") {
-      handleFileReceived(data);
-    } else if (data.type === "message") {
-      appendMessage("Peer", data.content);
-    }
-  });
 
-  connection.on("error", (err) => {
-    console.error("Connection error:", err);
-    monitoredConnection.status = false;
-  });
-
-  connection.on("close", () => {
-    console.log("Connection closed");
-    monitoredConnection.status = false;
-  });
-}
-function setDynamicHeight() {
-  //all the below calculations are done in pixels...
+function setDynamicHeightResize() {
+  console.log("dynamic height resize function inititiated");
   const mediaSectionContainer = document.querySelector(
     ".media-section-container"
   );
-  const topOffset = mediaSectionContainer.getBoundingClientRect().top; // Get the distance from the top of the viewport to the container
-
-  // Calculate the available height by subtracting the top offset from the viewport height
+  const topOffset = mediaSectionContainer.getBoundingClientRect().top;
   const availableHeight = window.innerHeight - topOffset - 5;
-  // Set the height of .response-container
   mediaSectionContainer.style.height = `${availableHeight}px`;
+  const remoteVidElement = document.getElementById("remote-video");
+  remoteVidElement.style.height = "95%";
+  remoteVidElement.style.maxHeight = "95%";
+  const chatContainer = document.querySelector(".chat-container");
+  chatContainer.style.height = "97%";
+  chatContainer.style.maxHeight = "97%";
 }
 
 function toggleUI() {
@@ -134,147 +332,185 @@ function toggleUI() {
   const divider = document.querySelector(".white-line");
   const popupOverlay = document.querySelector("#popupOverlay");
 
-  // toggle the ui of the buttons
   statusBar.classList.toggle("hidden");
   divider.classList.toggle("hidden");
   mediaSection.classList.toggle("hidden");
   popupOverlay.classList.toggle("show");
 }
-// event listener to listen to load event:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-window.addEventListener("load", setDynamicHeight);
-// event listener to listen to resize event::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-window.addEventListener("resize", setDynamicHeight);
-function popUpDisplay(title, content) {
+
+function popUpDisplay(title, content, element) {
   const popupTitle = document.getElementById("popup-title");
   const popupBody = document.getElementById("popup-body");
   popupTitle.innerHTML = title;
   popupBody.innerHTML = content;
+  if (element === "loader") {
+    //show the loader animation and hide the refresh button
+    document.querySelector(".loader").classList.remove("hidden");
+    document.getElementById("refresh-btn").classList.add("hidden");
+  } else if (element === "refreshbtn") {
+    //show the refresh button and hide the loader animation
+    document.querySelector(".loader").classList.add("hidden");
+    document.getElementById("refresh-btn").classList.remove("hidden");
+  } else {
+    //show both the refresh button and the loader animation
+    document.querySelector(".loader").classList.remove("hidden");
+    document.getElementById("refresh-btn").classList.remove("hidden");
+  }
 }
-async function roomInitialiser() {
-  try {
-    //get the roomID from the url
-    const urlParams = new URLSearchParams(window.location.search);
-    // Get the value of a specific query parameter
-    const roomID = urlParams.get("roomID");
-    //send get request to the backend to get the loopRoomObj needed to set up the room
-    const response = await fetch(`/setupRoom?roomID=${roomID}`, {
-      method: "GET", // Specify the HTTP method
-      headers: {
-        "Content-Type": "application/json", // Set headers if needed
-      },
-    });
-    const newResponse = await response.json();
-    if (response.ok && newResponse.status === "success") {
-      console.log(newResponse);
-      //setting the peerid of sender and receiver
-      senderPeerID = newResponse.roomInfo.senderLID;
-      receiverPeerID = newResponse.roomInfo.receiverLID;
-      //initialising the peer to the peer server so that this user is available on the peer-server peers list
-      peer = new Peer(newResponse.userInfo.loopID, {
-        config: {
-          iceServers: [
-            // Google's public STUN servers
-            { urls: "stun:stun.l.google.com:19302" },
-            { urls: "stun:stun1.l.google.com:19302" },
-            { urls: "stun:stun2.l.google.com:19302" },
-          ],
-        },
-        host: "/",
-        port: 3000,
-        path: "/peerjs",
-        debug: 3,
-      });
-      popUpDisplay(
-        "Room setup successfully!!",
-        "waiting for other person to join"
-      );
-      await createConnection(newResponse);
-      // popUpDisplay("Your client has joined the room!!!", "loading the room");
-    } else {
-      //setting-up failed
-      console.log("failed to initialise the room-setup.");
-      popUpDisplay(
-        "Failed to setup the loop-room",
-        "pls click the refresh button or reload the page yourself"
-      );
-    }
-  } catch (error) {
-    console.log(error);
+
+/* function failureHandler() {
+  //this function is called whenever any failure happens like network/user not present/etc so we give a failure message along with a retry button
+  popUpDisplay(
+    "Failed to connect to the user",
+    "Pls click the refresh button to retry!!!",
+    "refresh"
+  );
+  toggleUI();
+} */
+async function reconnectHandler() {
+  popUpDisplay(
+    "Failed to connect to the user",
+    "Click the refresh button to try again...",
+    "refreshbtn"
+  );
+}
+const refreshBtns = document.querySelectorAll(".refresh-btn");
+refreshBtns.forEach((button) => {
+  button.addEventListener("click", () => {
     popUpDisplay(
-      "Error encountered!!!Failed to setup the loop-room",
-      "pls click the refresh button or reload the page yourself"
+      "Reconnecting to the server",
+      "Wait a few seconds...",
+      "loader"
+    );
+    //now we will reset the value of the refreshCount so that the peer.on("error",...) can again start executing its if-block instead of the else block
+    refreshCount = 0;
+    //try to reconnect to the user once and after that the peer.on("error",...) will takeover for further handling...
+    peer.disconnect();
+    peer.reconnect();
+  });
+});
+
+/*async function handleDisconnectEvent() {
+  //handling the condition when one of the users ends the connection
+  if (role === "sender") {
+    console.log(
+      "hi from the handledisconnect event ...the receiver has disconnected!!!"
+    );
+    //calling reconnect handler so as to show-up the refresh button along with popup
+    //await reconnectHandler();
+  } else {
+    console.log("the sender has disconnected!!!");
+    //load the simple waiting popup if the user is a receiver
+    popUpDisplay(
+      "Your loop buddy got disconnected from the call!!!",
+      "waiting for loop-buddy to reconnect....",
+      "refreshbtn"
     );
   }
-}
-async function createConnection(newResponse) {
-  if (newResponse.role === "sender") {
-    //code if the current client is a sender
-    /*
- The peer.on("open", () => { ... }) is invoked when the PeerJS client has successfully established a connection to the PeerJS server and has been assigned a unique peer ID.*/
-    peer.on("open", (id) => {
-      console.log(`My peer ID is: ${id}`);
-      /*sending a connection request to the receiver client.
-    now,once the receiver accepts the connection request sent, then the "conn" object below will be the reference object to communicate with the other peer.*/
-      conn = peer.connect(receiverPeerID);
-      // Check if the connection is successfully established
-      //the conn.on("open",...) is invoked only if the connection is successfully established .
-      conn.on("open", () => {
-        console.log("Connection successfully accepted by the receiver!");
-        // Perform any actions now that the connection is established
-        monitoredConnection.status = true;
-      });
+} */
+// New function to set up video call
+async function setupVideoCall() {
+  console.log("videocalling the buddy...");
+  try {
+    // Sender side call
+    const call = peer.call(receiverPeerID, localStream);
+    call.on("stream", async (remoteStream) => {
+      await initialiseRemoteStream(remoteStream);
+    });
+    call.on("error", async (error) => {
+      console.error("Call setup error:", error);
+      throw new Error("Call setup error:");
+    });
 
-      // Handle connection errors
-      conn.on("error", (err) => {
-        console.error("Connection error:", err);
-        monitoredConnection.status = false;
-      });
+    call.on("close", async () => {
+      console.warn("Remote video call closed");
+      throw new Error("Remote video call closed");
     });
-  } else {
-    //code if the current client is a sender
-    /*The peer.on("connection", () => { ... }) method is invoked when another peer initiates a connection request to the current peer using the peer.connect(peerID) method*/
-    peer.on("connection", (connection) => {
-      //the parameter of callback-function here will act as reference object for our connection,so store that in a global var named "conn" for further use.
-      conn = connection;
-      // Set up event handlers immediately for receiver
-      setupConnectionHandlers(conn);
-      monitoredConnection.status = true;
+
+    // Receiver side call handler
+    peer.on("call", (incomingCall) => {
+      try {
+        incomingCall.answer(localStream);
+        incomingCall.on("stream", async (remoteStream) => {
+          await initialiseRemoteStream(remoteStream);
+        });
+
+        incomingCall.on("error", async (error) => {
+          console.error("Incoming call error:", error);
+          await reconnectHandler();
+          throw new Error("Incoming call error:");
+        });
+
+        incomingCall.on("close", async () => {
+          console.warn("Incoming video call closed");
+          await reconnectHandler();
+          throw new Error("Incoming video call closed");
+        });
+      } catch (answerError) {
+        console.error("Error answering incoming call:", answerError);
+        throw new Error("Error answering incoming call:");
+      }
     });
+  } catch (setupError) {
+    console.error("Video call setup error:", setupError);
+    throw new Error("Video call setup error:");
   }
+}
+// New function to get user media and set up local video
+async function initialiseLocalStream() {
+  console.log("local video stream initialised");
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: true,
+    });
+
+    localVideo.srcObject = localStream;
+    localVideo.play();
+    return true;
+  } catch (error) {
+    console.error("Error accessing media devices:", error);
+    popUpDisplay(
+      "Media Access Error",
+      "Could not access camera or microphone. Video call will be disabled.",
+      "refreshbtn"
+    );
+    return false;
+  }
+}
+async function initialiseRemoteStream(remoteStream) {
+  console.log("Incoming remote stream received");
+  remoteVideo.srcObject = remoteStream;
+  remoteVideo.play();
+  monitoredConnection.status = true;
+}
+async function getElementDimension(element) {
+  if (!element || !(element instanceof HTMLElement)) {
+    throw new Error(
+      "Invalid element passed. Please provide a valid HTML element."
+    );
+  }
+  const dim = {};
+  dim.width = element.offsetWidth; //all in pixels
+  dim.height = element.offsetHeight;
+  console.log("value of dim is", dim);
+  return dim;
+}
+//rough work herer
+// Add video control functions
+function toggleVideoStream() {
+  const videoTracks = localStream.getVideoTracks();
+  videoTracks.forEach((track) => {
+    track.enabled = !track.enabled;
+  });
+}
+
+function toggleAudioStream() {
+  const audioTracks = localStream.getAudioTracks();
+  audioTracks.forEach((track) => {
+    track.enabled = !track.enabled;
+  });
 }
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-function setupConnectionHandlers(connection) {
-  // Debug log
-  console.log("Setting up connection handlers");
-
-  // Data receiving handler
-  connection.on("data", (data) => {
-    console.log("Raw received data:", data);
-    try {
-      let decodedMessage = data.message || data;
-      console.log("Received and decoded message:", decodedMessage);
-
-      const chatMessages = document.getElementById("chat-messages");
-      const newMessage = document.createElement("p");
-      newMessage.innerHTML = `<b>Peer:</b> ${decodedMessage}`;
-      chatMessages.appendChild(newMessage);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    } catch (error) {
-      console.error("Error processing received message:", error);
-    }
-  });
-
-  // Error handler
-  connection.on("error", (err) => {
-    console.error("Connection error:", err);
-    monitoredConnection.status = false;
-  });
-
-  // Close handler
-  connection.on("close", () => {
-    console.log("Connection closed");
-    monitoredConnection.status = false;
-  });
 }

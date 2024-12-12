@@ -186,7 +186,7 @@ async function updateSection2() {
         } else {
           //this is the real case.Now, we will create bars and append it to the section2 div....
           section2.innerHTML += `<button   class="section2retryBtn small-btn">Refresh</button>`;
-          for (let i = 0; i < data.length; i++) {
+          for (let i = data.length - 1; i >= 0; i--) {
             await popUpBar(section2, 2, data[i]);
           }
           return;
@@ -241,7 +241,7 @@ async function updateSection3() {
         } else {
           //this is the real case.Now, we will create bars and append it to the section2 div....
           section3.innerHTML += `<button  class="section3refreshBtn small-btn">Refresh</button>`;
-          for (let i = 0; i < data.length; i++) {
+          for (let i = data.length - 1; i >= 0; i--) {
             await popUpBar(section3, 3, data[i]);
           }
           return;
