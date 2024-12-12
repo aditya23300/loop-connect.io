@@ -2,7 +2,7 @@ let peer,
   conn,
   senderPeerID,
   receiverPeerID,
-  connectionStatus = { status: false, message: "" },
+  connectionStatus = { status: true, message: "" },
   monitoredConnection,
   refreshCount = 0,
   role,
@@ -13,6 +13,7 @@ const remoteVideo = document.getElementById("remote-video");
 document.addEventListener("DOMContentLoaded", async () => {
   // Add event listeners for dynamic height adjustment
   window.addEventListener("load", async () => {
+    setDynamicHeightResize();
     while (!connectionStatus.status) {
       await delay(10);
     }
