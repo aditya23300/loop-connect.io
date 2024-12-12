@@ -461,7 +461,7 @@ async function initialiseLocalStream() {
   console.log("local video stream initialised");
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
+      audio: true,
       video: true,
     });
 
