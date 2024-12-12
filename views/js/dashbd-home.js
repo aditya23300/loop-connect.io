@@ -281,7 +281,7 @@ async function toggleUIForCreateLoopSession() {
   }
 }
 async function popUpBar(targetDiv, sectionNo, data) {
-  const loopRoomURL = `loop-connect.onrender.com/loopRooms?roomID=${data.loopRoomID}`;
+  const loopRoomURL = `https://loop-connect.onrender.com/loopRooms?roomID=${data.loopRoomID}`;
   const time = await getReadableDate(data.roomCreationTime);
   let HTMLcontent;
   if (sectionNo === 2) {
