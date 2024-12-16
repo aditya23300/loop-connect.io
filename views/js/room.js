@@ -150,6 +150,21 @@ async function roomInitialiser() {
         path: "/peerjs",
         secure: true, // Set to true for HTTPS
         debug: 3,
+        config: {
+          iceServers: [
+            // Google's public STUN servers
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+            { urls: "stun:stun2.l.google.com:19302" },
+
+            // Optional: Add TURN servers for better connectivity
+            // {
+            //   urls: "turn:your-turn-server.com",
+            //   username: "your-username",
+            //   credential: "your-password"
+            // }
+          ],
+        },
       });
       const myBuddyID =
         newResponse.userInfo.loopID === receiverPeerID
